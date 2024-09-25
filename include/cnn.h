@@ -29,4 +29,17 @@ public:
     }
 };
 
+
+// Función para calcular la pérdida cross-entropy
+template<typename T>
+T cross_entropy_loss(const std::vector<T>& predicted, const std::vector<int>& labels) {
+    T loss = 0.0;
+    for (size_t i = 0; i < predicted.size(); ++i) {
+        loss -= labels[i] * std::log(predicted[i] + 1e-9);  // Añadimos un pequeño valor para evitar log(0)
+    }
+    return loss;
+}
+
+
+
 #endif // CNN_H

@@ -54,6 +54,40 @@ public:
         }
         return output;
     }
+
+// Retropropagación para la capa convolucional
+    std::vector<std::vector<T>> backward(const std::vector<std::vector<T>>& d_output, const std::vector<std::vector<T>>& input, T learning_rate) {
+        // Inicializar gradientes para los filtros
+        std::vector<std::vector<std::vector<T>>> d_filters(num_filters, std::vector<std::vector<T>>(filter_size, std::vector<T>(filter_size, 0.0)));
+        std::vector<std::vector<T>> d_input(input.size(), std::vector<T>(input[0].size(), 0.0));
+
+        for (int f = 0; f < num_filters; ++f) {
+            for (int i = 0; i < d_output.size(); ++i) {
+                for (int j = 0; j < d_output[0].size(); ++j) {
+                    for (int fi = 0; fi < filter_size; ++fi) {
+                        for (int fj = 0; fj < filter_size; ++fj) {
+                            // Actualizar los filtros con gradiente descendente
+                            d_filters[f][fi][fj] += d_output[i][j] * input[i + fi][j + fj];
+                            d_input[i + fi][j + fj] += filters[f][fi][fj] * d_output[i][j];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Actualizar los filtros con el gradiente
+        for (int f = 0; f < num_filters; ++f) {
+            for (int fi = 0; fi < filter_size; ++fi) {
+                for (int fj = 0; fj < filter_size; ++fj) {
+                    filters[f][fi][fj] -= learning_rate * d_filters[f][fi][fj];
+                }
+            }
+        }
+
+        return d_input;
+    }
+
+
 };
 
 #endif // CONV_LAYER_H

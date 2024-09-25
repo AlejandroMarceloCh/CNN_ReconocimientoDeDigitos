@@ -2,7 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstdint>
 
+// Función para cargar imágenes desde el archivo MNIST
 void loadMNISTImages(const std::string &filename, std::vector<std::vector<float>> &images) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
@@ -34,6 +36,35 @@ void loadMNISTImages(const std::string &filename, std::vector<std::vector<float>
         for (uint32_t j = 0; j < tempImage.size(); ++j) {
             images[i][j] = static_cast<float>(tempImage[j]) / 255.0f;
         }
+    }
+
+    file.close();
+}
+
+// Función para cargar las etiquetas del archivo MNIST
+void loadMNISTLabels(const std::string& path, std::vector<int>& labels) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Error al abrir el archivo de etiquetas: " << path << std::endl;
+        return;
+    }
+
+    // Leer el encabezado del archivo
+    int magic_number;
+    int number_of_labels;
+    file.read(reinterpret_cast<char*>(&magic_number), sizeof(magic_number));
+    file.read(reinterpret_cast<char*>(&number_of_labels), sizeof(number_of_labels));
+
+    // Convertir de big-endian a little-endian
+    magic_number = __builtin_bswap32(magic_number);
+    number_of_labels = __builtin_bswap32(number_of_labels);
+
+    // Leer las etiquetas
+    labels.resize(number_of_labels);
+    for (int i = 0; i < number_of_labels; ++i) {
+        unsigned char label;
+        file.read(reinterpret_cast<char*>(&label), sizeof(label));
+        labels[i] = static_cast<int>(label);
     }
 
     file.close();
