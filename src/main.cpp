@@ -15,6 +15,33 @@ std::vector<std::vector<float>> reshape_image(const std::vector<float>& image_1d
     return image_2d;
 }
 
+
+// Función para evaluar el modelo
+float evaluate(CNN<float>& cnn, const std::vector<std::vector<float>>& test_images, const std::vector<int>& test_labels) {
+    int correct_predictions = 0;
+    
+    for (size_t i = 0; i < test_images.size(); ++i) {
+        // Convertir imagen de 1D a 2D
+        std::vector<std::vector<float>> mnist_image = reshape_image(test_images[i], 28, 28);
+
+        // Forward pass
+        auto output = cnn.forward(mnist_image);
+
+        // Obtener la clase predicha
+        int predicted_label = std::distance(output.begin(), std::max_element(output.begin(), output.end()));
+
+        // Comparar con la etiqueta real
+        if (predicted_label == test_labels[i]) {
+            correct_predictions++;
+        }
+    }
+
+    // Calcular precisión
+    float accuracy = (float)correct_predictions / test_images.size();
+    return accuracy;
+}
+
+
 int main() {
     CNN<float> cnn;
     
@@ -27,7 +54,7 @@ int main() {
     loadMNISTLabels(train_labels_path, labels);
 
     float learning_rate = 0.01;
-    int epochs = 10;
+    int epochs = 20;
 
     // Ciclo de entrenamiento
     for (int epoch = 0; epoch < epochs; ++epoch) {
@@ -54,7 +81,7 @@ int main() {
             }
 
             // Backward pass
-            cnn.backward(d_output, learning_rate);
+            cnn.backward(d_output, mnist_image, learning_rate);
         }
 
         std::cout << "Epoch " << epoch + 1 << " completed. Loss: " << total_loss / images.size() << std::endl;

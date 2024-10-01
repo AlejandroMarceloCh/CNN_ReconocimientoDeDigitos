@@ -86,6 +86,9 @@ public:
 
         return d_input;
     }
+    // En conv_layer.h, dentro de la clase ConvLayer
+        int getFilterSize() const { return filter_size; }
+
 
 
 };

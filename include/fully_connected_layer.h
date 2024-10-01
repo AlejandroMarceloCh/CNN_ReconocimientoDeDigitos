@@ -48,6 +48,22 @@ public:
     T sigmoid(T x) {
         return 1.0 / (1.0 + std::exp(-x));
     }
+    // Retropropagación
+    std::vector<T> backward(const std::vector<T>& d_output, const std::vector<T>& input, T learning_rate) {
+        std::vector<T> d_input(input.size(), 0.0);
+        
+        for (int i = 0; i < weights.size(); ++i) {
+            for (int j = 0; j < input.size(); ++j) {
+                // Gradiente respecto a los pesos
+                weights[i][j] -= learning_rate * d_output[i] * input[j];
+                // Gradiente respecto a la entrada
+                d_input[j] += weights[i][j] * d_output[i];
+            }
+            // Gradiente respecto a los sesgos
+            biases[i] -= learning_rate * d_output[i];
+        }
+        return d_input;
+    }
 };
 
 #endif // FULLY_CONNECTED_LAYER_H
