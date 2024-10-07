@@ -11,23 +11,29 @@ class CNN {
 private:
     ConvLayer<T> conv1;
     PoolingLayer<T> pool1;
-    FullyConnectedLayer<T> fc1;
+    FullyConnectedLayer<T>* fc1;  // Cambiamos a un puntero
     int input_size;
     int conv_output_size;
     int pool_output_size;
 
 public:
-        CNN(int input_size = 28) : 
+    CNN(int input_size = 28) : 
         input_size(input_size),
         conv1(8, 3), 
         pool1(2),
-        conv_output_size(input_size - conv1.getFilterSize() + 1),
-        pool_output_size(0),  // Inicializamos a 0 temporalmente
-        fc1(0, 10)  // Inicializamos con 0 temporalmente
-{ 
-    pool_output_size = pool1.getOutputSize(conv_output_size);
-    fc1 = FullyConnectedLayer<T>(pool_output_size * pool_output_size * 8, 10);
-}
+        conv_output_size(input_size - conv1.getFilterSize() + 1) 
+    { 
+        // Calculamos pool_output_size correctamente
+        pool_output_size = pool1.getOutputSize(conv_output_size);
+
+        // Ahora inicializamos fc1 con puntero
+        fc1 = new FullyConnectedLayer<T>(pool_output_size * pool_output_size * 8, 10);
+    }
+
+    ~CNN() {
+        delete fc1;  // Liberamos la memoria asignada a fc1
+    }
+
     std::vector<T> forward(const std::vector<std::vector<T>>& input) {
         auto conv_output = conv1.forward(input);
         auto pool_output = pool1.forward(conv_output);
@@ -38,7 +44,7 @@ public:
             flattened.insert(flattened.end(), row.begin(), row.end());
         }
 
-        return fc1.forward(flattened);
+        return fc1->forward(flattened);  // Usamos puntero para acceder a fc1
     }
 
     // Método de retropropagación
@@ -48,11 +54,9 @@ public:
         for (const auto& row : pool_output) {
            flattened_pool_output.insert(flattened_pool_output.end(), row.begin(), row.end());
         }
-        
-        
-        // Retropropagación en la capa fully connected
-            std::vector<T> d_pool_output = fc1.backward(d_output, flattened_pool_output, learning_rate);
 
+        // Retropropagación en la capa fully connected
+        std::vector<T> d_pool_output = fc1->backward(d_output, flattened_pool_output, learning_rate);
 
         // Reshape de d_pool_output a la forma adecuada para la capa de pooling
         std::vector<std::vector<T>> d_conv_output(pool_output_size, std::vector<T>(pool_output_size));
@@ -70,7 +74,7 @@ public:
     }
 };
 
-// Función para calcular la pérdida cross-entropy
+// Función global para calcular la pérdida cross-entropy
 template<typename T>
 T cross_entropy_loss(const std::vector<T>& predicted, const std::vector<int>& labels) {
     T loss = 0.0;
